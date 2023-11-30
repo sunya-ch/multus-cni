@@ -36,6 +36,7 @@ import (
 	nettypes "github.com/k8snetworkplumbingwg/network-attachment-definition-client/pkg/apis/k8s.cni.cncf.io/v1"
 	netclient "github.com/k8snetworkplumbingwg/network-attachment-definition-client/pkg/client/clientset/versioned/typed/k8s.cni.cncf.io/v1"
 	netutils "github.com/k8snetworkplumbingwg/network-attachment-definition-client/pkg/utils"
+	"gopkg.in/k8snetworkplumbingwg/multus-cni.v4/pkg/ext"
 	"gopkg.in/k8snetworkplumbingwg/multus-cni.v4/pkg/kubeletclient"
 	"gopkg.in/k8snetworkplumbingwg/multus-cni.v4/pkg/logging"
 	"gopkg.in/k8snetworkplumbingwg/multus-cni.v4/pkg/types"
@@ -425,7 +426,17 @@ func GetNetworkDelegates(k8sclient *ClientInfo, pod *v1.Pod, networks []*types.N
 		if err != nil {
 			return nil, logging.Errorf("GetNetworkDelegates: failed getting the delegate: %v", err)
 		}
-		delegates = append(delegates, delegate)
+
+		if ext.CheckGeneratedDelegate(delegate) {
+			generatedDelegates, err := ext.GenerateDelegates(delegate, net, pod)
+			if err != nil {
+				return nil, logging.Errorf("GetNetworkDelegates: failed generating the delegates: %v", err)
+			}
+			delegates = append(delegates, generatedDelegates...)
+		} else {
+			delegates = append(delegates, delegate)
+		}
+
 		resourceMap = updatedResourceMap
 	}
 

@@ -1,0 +1,27 @@
+// To regenerate generator.pb.go run 
+//   protoc --proto_path=./pkg/ext/proto --go_out=. --go-grpc_out=. generator.proto
+syntax = "proto3";
+
+package generator;
+option go_package = "./pkg/ext/proto";
+
+message GenerateResponse {
+  bool success = 1;
+  repeated bytes confList = 2;
+  string message = 3;
+}
+
+message ConfigRequest {
+  string podName = 1;
+  string podNamespace = 2;
+  string hostName = 3;
+  bytes data = 4;
+}
+
+// Generator generates config bytes from provided config
+service Generator {
+  // Sends a request for generating list of configBytes
+  rpc Generate (ConfigRequest) returns (GenerateResponse) {}
+  // Sends a request for cleaning up and returning the generated configBytes
+  rpc Cleanup (ConfigRequest) returns (GenerateResponse) {}
+}
